@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>学習計画アンケート</title>
+<!-- formrunの「スクリプト設置」（必須チェックやエラー表示、送信中の表示に使われる） -->
+<script src="https://sdk.form.run/js/v2/formrun.js"></script>
+<style>
+  /* 通常のformrunのフォームに近い見た目（白い背景、細い枠線、赤い「必須」、水色の送信ボタン） */
+  :root { --main:#54b6d3; --main-dark:#3fa3c1; --text:#333; --line:#d9d9d9; --req:#e0483e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",Meiryo,sans-serif; background:#fff; color:var(--text); line-height:1.7; }
+  .wrap { max-width:640px; margin:0 auto; padding:24px 20px 48px; }
+  h1 { font-size:26px; font-weight:500; text-align:center; margin:16px 0 8px; }
+  h2 { font-size:18px; font-weight:600; margin:0 0 20px; padding-bottom:8px; border-bottom:2px solid var(--main); }
+  .lead { font-size:14px; color:#666; margin:0 0 20px; white-space:pre-line; }
+  .progress { height:6px; background:#e9eef0; border-radius:3px; overflow:hidden; margin:8px 0 6px; }
+  .progress > div { height:100%; width:0; background:var(--main); transition:width .2s; }
+  .step-label { font-size:12px; color:#888; text-align:right; margin-bottom:20px; }
+  .q { margin:0 0 28px; }
+  .q > .title, .sub > .sublabel { display:block; font-size:15px; font-weight:500; margin-bottom:8px; }
+  .sub { margin:0 0 14px; }
+  .sub > .sublabel { font-size:13px; font-weight:400; color:#555; margin-bottom:4px; }
+  .req { display:inline-block; white-space:nowrap; color:#fff; background:var(--req); font-size:11px; font-weight:500; padding:2px 7px; border-radius:3px; margin-left:8px; vertical-align:1px; }
+  .help { font-size:12px; color:#777; margin:0 0 8px; white-space:pre-line; }
+  input[type=text], input[type=number], input[type=date], select, textarea { width:100%; padding:12px; font-size:16px; border:1px solid var(--line); border-radius:4px; background:#fff; color:var(--text); }
+  input[readonly] { background:#f4f4f4; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--main); box-shadow:0 0 0 2px rgba(84,182,211,.25); }
+  .opt { display:flex; align-items:center; gap:10px; padding:14px; border:1px solid var(--line); border-radius:4px; margin-bottom:8px; cursor:pointer; background:#fff; }
+  .opt input { margin:0; width:18px; height:18px; flex:none; accent-color:var(--main); }
+  .opt:has(input:checked) { border-color:var(--main); background:#f0f9fc; }
+  .other-box { margin:-2px 0 8px; }
+  .buttons { display:flex; gap:10px; margin-top:16px; }
+  button { flex:1; padding:16px; font-size:17px; border-radius:4px; border:1px solid var(--main); background:#fff; color:var(--main); cursor:pointer; }
+  button.primary { background:var(--main); color:#fff; }
+  button.primary:hover { background:var(--main-dark); }
+  button.add, button.remove { width:100%; margin-top:6px; border-style:dashed; font-size:15px; padding:12px; }
+  button.remove { color:#888; border-color:#bbb; }
+  .hidden { display:none !important; }
+  .error { color:var(--req); font-size:13px; margin:8px 0 0; }
+  .has-error { background:#fff4f3; border-radius:4px; box-shadow:0 0 0 6px #fff4f3; }
+  .slot { border-top:1px solid #eee; padding-top:16px; margin-top:16px; }
+  .slot-title { font-size:16px; font-weight:600; margin-bottom:10px; }
+  .row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .row .day { flex:none; width:2.2em; text-align:center; font-weight:500; }
+  .note { background:#f7f7f7; border:1px solid #e5e5e5; padding:12px; border-radius:4px; font-size:13px; color:#555; white-space:pre-line; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>学習計画アンケート</h1>
+  <p class="lead">あなたの勉強計画を作るアンケートです（3〜5分）。
+答えた内容から計画表ができて、あなたのLINEに届きます。担当講師がそれを見て、直すところを伝えます。
+ワークや問題集を手元に用意してから始めると早く終わります。保護者の方と一緒に答えてもかまいません。</p>
+  <div class="progress"><div id="bar"></div></div>
+  <div class="step-label" id="stepLabel"></div>
+
+  <!-- class, action, methodは変更しない（formrunのサンプルコードのまま） -->
+  <form id="f" class="formrun" action="https://form.run/api/v1/r/3xgqiocg865mco4ahwg9cam8" method="post" novalidate>
+    <div id="hiddenArea"></div>
+    <div id="steps"></div>
+
+    <!-- ボット投稿をブロックするためのタグ（formrunのサンプルコードのまま） -->
+    <div class="_formrun_gotcha">
+      <style media="screen">._formrun_gotcha {position:absolute!important;height:1px;width:1px;overflow:hidden;}</style>
+      <label for="_formrun_gotcha">If you are a human, ignore this field</label>
+      <input type="text" name="_formrun_gotcha" id="_formrun_gotcha" tabindex="-1">
+    </div>
+
+    <div class="error" id="err"></div>
+    <div class="buttons">
+      <button type="button" id="back" class="hidden">戻る</button>
+      <button type="button" class="primary" id="next">次へ</button>
+      <button type="submit" class="primary hidden" id="submit" data-formrun-error-text="未入力の項目があります" data-formrun-submitting-text="送信中...">送信</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ===== 設定（文言は Notion「計画アンケートv2」と同じ）=====
+  var LIFF_URL = 'https://liff.line.me/{LIFF_ID}'; // LIFF作成後に差し替える
+  var TASK_MAX = 10;
+  var LEVELS = {
+    J: { subjects: ['英語', '数学', '国語', '理科', '社会', 'その他'], maxGoals: 5 },
+    S: { subjects: ['英語', '数学', '国語', '物理・物理基礎', '化学・化学基礎', '生物・生物基礎', '地学・地学基礎', '地理', '歴史（日本史・世界史）', '公民（倫理・政治経済・公共）', 'その他'], maxGoals: 9 }
+  };
+  var GRADES = ['中1', '中2', '中3', '高1', '高2', '高3', 'その他（既卒など）'];
+  var STYLES = [
+    { id: 'A', name: '定期テスト', label: '次の定期テストで点を上げたい（例：11月の期末で数学70点）' },
+    { id: 'AP', name: '検定', label: '英検・漢検などの試験に受かりたい（例：1月の英検準2級）' },
+    { id: 'B', name: '受験逆算', label: '受験に向けて、次の模試までにやることを決めたい（例：12月の模試で英語の偏差値55）' },
+    { id: 'C', name: '習慣なし', label: '勉強の習慣がまだないので、まずは毎日少しでも机に向かうことを優先したい（例：週5日、1日30分）' },
+    { id: 'CP', name: '習慣あり', label: '勉強の習慣はある。学校・塾・トウコベの課題やタスクを、毎週きちんと終わらせたい（例：数学の問題集を毎週10ページ）' }
+  ];
+  var WEEKDAYS = [['mon', '月'], ['tue', '火'], ['wed', '水'], ['thu', '木'], ['fri', '金'], ['sat', '土'], ['sun', '日']];
+  var AVAIL = ['0分', '30分', '1時間', '1時間半', '2時間', '3時間以上'];
+  var UNIT_MIN = ['3分', '5分', '10分', '15分', '20分', '30分', '45分', '60分', 'まだ計っていない'];
+  var HW_WEEKLY = ['ほとんどない', '1〜2時間', '3〜4時間', '5時間以上'];
+  var GAP_TEST = ['解き方が分からなかった', '覚えていなかった', '計算ミス・書き間違いをした', '時間が足りなかった', 'テストまでに範囲が終わっていなかった', '前回のテストがない・覚えていない'];
+  var GAP_MOCK = GAP_TEST.slice(0, 5).concat(['模試をまだ受けたことがない']);
+  var GAP_TEXT_HELP = '「数学が苦手」ではなく、どの単元の、どんな問題かを書いてください。講師はここをいちばんよく見ます';
+  var NOEDIT = '書きかえないでください';
+
+  // ===== 部品 =====
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  function h(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    Object.keys(attrs || {}).forEach(function (k) {
+      var v = attrs[k];
+      if (v == null || v === false) return;
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (v === true) e.setAttribute(k, '');
+      else e.setAttribute(k, v);
+    });
+    (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function titleEl(title, required) {
+    var t = h('div', { class: 'title' }, [title]);
+    if (required) t.appendChild(h('span', { class: 'req', text: '必須' }));
+    return t;
+  }
+  // 1つの設問（題名＋補足＋入力欄）。required のとき data-req を付ける（必須チェックの対象）
+  function q(title, opt, body) {
+    opt = opt || {};
+    var w = h('div', { class: 'q', 'data-req': opt.required ? '1' : null, 'data-title': title });
+    w.appendChild(titleEl(title, opt.required));
+    if (opt.help) w.appendChild(h('div', { class: 'help', text: opt.help }));
+    body.forEach(function (b) { w.appendChild(b); });
+    return w;
+  }
+  // 1つの設問の中に、小見出し付きの入力欄が複数ある（例：科目と目標の点数）
+  function group(title, help, subs) {
+    var w = h('div', { class: 'q' });
+    w.appendChild(h('div', { class: 'title' }, [title]));
+    if (help) w.appendChild(h('div', { class: 'help', text: help }));
+    subs.forEach(function (s) { w.appendChild(s); });
+    return w;
+  }
+  function sub(label, input, opt) {
+    opt = opt || {};
+    var w = h('div', { class: 'sub', 'data-req': opt.required ? '1' : null, 'data-title': label });
+    var l = h('div', { class: 'sublabel' }, [label]);
+    if (opt.required) l.appendChild(h('span', { class: 'req', text: '必須' }));
+    w.appendChild(l);
+    if (opt.help) w.appendChild(h('div', { class: 'help', text: opt.help }));
+    w.appendChild(input);
+    return w;
+  }
+  function text(name, o) { o = o || {}; return h('input', { type: 'text', name: name, readonly: o.readonly, value: o.value }); }
+  // 点数・偏差値の入力欄（数字だけ。全角は半角に直す。文字が入ったら「形式が違う」と出す）
+  function num(name) { return h('input', { type: 'text', name: name, inputmode: 'decimal', 'data-num': '1' }); }
+  // 範囲や量の入力欄（数字以外も入れられる。例：3-a、15〜20）
+  function freeNum(name, ph) { return h('input', { type: 'text', name: name, placeholder: ph || '' }); }
+  function date(name) { return h('input', { type: 'date', name: name }); }
+  function area(name) { return h('textarea', { name: name, rows: '4' }); }
+  function select(name, options) {
+    var s = h('select', { name: name }, [h('option', { value: '', text: '選んでください' })]);
+    options.forEach(function (o) { s.appendChild(h('option', { value: o, text: o })); });
+    return s;
+  }
+  // 選択（1つ）。otherDetail: 「その他」を選ぶと詳細を入力できる
+  function radios(name, options, otherDetail) {
+    var box = h('div');
+    var other = null;
+    options.concat(otherDetail ? ['その他'] : []).forEach(function (o) {
+      var inp = h('input', { type: 'radio', name: name, value: o });
+      box.appendChild(h('label', { class: 'opt' }, [inp, o]));
+      if (otherDetail && o === 'その他') {
+        other = h('div', { class: 'other-box hidden' }, [h('input', { type: 'text', name: name + '_other', placeholder: 'その他の内容を入力してください' })]);
+        box.appendChild(other);
+      }
+    });
+    if (other) box.addEventListener('change', function () {
+      var on = box.querySelector('input[value="その他"]:checked');
+      other.classList.toggle('hidden', !on);
+      if (!on) other.querySelector('input').value = '';
+    });
+    return box;
+  }
+  // 科目の選択。「その他」を選ぶと、詳細を入力できる
+  function subjectSelect(name, options) {
+    var box = h('div'), s = select(name, options);
+    var other = h('div', { class: 'other-box hidden' }, [h('input', { type: 'text', name: name + '_other', placeholder: 'その他の内容を入力してください' })]);
+    s.addEventListener('change', function () {
+      var on = s.value === 'その他';
+      other.classList.toggle('hidden', !on);
+      if (!on) other.querySelector('input').value = '';
+    });
+    box.appendChild(s); box.appendChild(other);
+    return box;
+  }
+  // 選択（複数）。otherDetail: 「その他」を選ぶと詳細を入力できる
+  function checks(name, options, otherDetail) {
+    var box = h('div'), other = null;
+    options.concat(otherDetail ? ['その他'] : []).forEach(function (o) {
+      box.appendChild(h('label', { class: 'opt' }, [h('input', { type: 'checkbox', name: name + '[]', value: o }), o]));
+      if (otherDetail && o === 'その他') {
+        other = h('div', { class: 'other-box hidden' }, [h('input', { type: 'text', name: name + '_other', placeholder: 'その他の内容を入力してください' })]);
+        box.appendChild(other);
+      }
+    });
+    if (other) box.addEventListener('change', function () {
+      var on = box.querySelector('input[value="その他"]:checked');
+      other.classList.toggle('hidden', !on);
+      if (!on) other.querySelector('input').value = '';
+    });
+    return box;
+  }
+  function note(t) { return h('div', { class: 'note', text: t }); }
+
+  // 枠を増やせる部品（教材・課題・上げたい科目）。1枠目は消せない
+  function slotList(max, make, addLabel) {
+    var box = h('div'), list = h('div');
+    var add = h('button', { type: 'button', class: 'add', text: addLabel });
+    var del = h('button', { type: 'button', class: 'remove hidden', text: '最後の枠を削除する' });
+    var n = 0;
+    function refresh() { add.classList.toggle('hidden', n >= max); del.classList.toggle('hidden', n <= 1); }
+    add.addEventListener('click', function () { if (n < max) { n++; list.appendChild(make(n)); refresh(); } });
+    del.addEventListener('click', function () { if (n > 1) { list.removeChild(list.lastChild); n--; refresh(); } });
+    n = 1; list.appendChild(make(1));
+    box.appendChild(list); box.appendChild(add); box.appendChild(del);
+    refresh();
+    return box;
+  }
+
+  // ===== 各ステップの中身 =====
+  var req = { required: true };
+
+  function goalStep(style, lv) {
+    var L = LEVELS[lv], s = [];
+    if (style === 'A') {
+      s.push(h('h2', { text: '定期テスト' }));
+      s.push(group('次の定期テストの名前と、始まる日を教えてください', null, [
+        sub('名前', radios('test_type', ['中間テスト', '期末テスト', '学年末テスト', '実力テスト'], true), req),
+        sub('始まる日', date('goal_date'), req)]));
+      s.push(slotList(L.maxGoals, function (k) {
+        var w = h('div', { class: k > 1 ? 'slot' : null });
+        if (k === 1) {
+          w.appendChild(group('いちばん点を上げたい科目と、目標の点数を教えてください', null, [
+            sub('科目', subjectSelect('goal_subject1', L.subjects), req),
+            sub('目標の点数', num('goal_score1'), { required: true, help: '前回より10〜20点上くらいが目安です' })]));
+          w.appendChild(q('その科目の、前回のテストの点数を教えてください', { help: '覚えていなければ空けておいてください' }, [num('last_score1')]));
+        } else {
+          w.appendChild(group(k + 'つ目に上げたい科目の、科目と目標の点数を教えてください', null, [
+            sub('科目', subjectSelect('goal_subject' + k, L.subjects), req),
+            sub('目標の点数', num('goal_score' + k), req),
+            sub('前回の点数', num('last_score' + k))]));
+        }
+        return w;
+      }, '＋ 上げたい科目を追加する'));
+      s.push(q('前回のテストで、点を落とした理由に近いものを教えてください', { required: true, help: '当てはまるものを、いくつでも選べます' }, [checks('gap_type', GAP_TEST, true)]));
+      s.push(q('点を落とした単元や問題を、分かる範囲で教えてください', { help: GAP_TEXT_HELP + '\n例：「二次関数の最大最小の文章題」「英語の並べかえ問題で8点」' }, [text('gap_text')]));
+      s.push(q('テストの範囲表が配られているか教えてください', req, [radios('photo_range', ['配られていて、手元にある', 'まだ配られていない', '範囲表は配られない'])]));
+      s.push(q('前回のテストの答案があれば、写真を送れるか教えてください', {}, [radios('photo_answer', ['送れる', '手元にない'])]));
+    } else if (style === 'AP') {
+      s.push(h('h2', { text: '検定・試験' }));
+      s.push(q('受ける試験と級を教えてください', { required: true, help: '例：「英検準2級」「漢検3級」「TOEIC」' }, [text('exam_name')]));
+      s.push(q('試験の日を教えてください', { required: true, help: '英検のように一次・二次がある場合は、一次の日を入れてください' }, [date('goal_date')]));
+      var typeQ = q('目標を教えてください', req, [radios('goal_type', ['合格する', '点数・スコアを取る（下の欄に数字を書く）'])]);
+      var scoreQ = q('目標の数字', req, [num('goal_score1')]);
+      scoreQ.classList.add('hidden'); scoreQ.querySelector('input').disabled = true;
+      typeQ.addEventListener('change', function () {
+        var on = !!typeQ.querySelector('input[value^="点数"]:checked');
+        var inp = scoreQ.querySelector('input');
+        scoreQ.classList.toggle('hidden', !on);
+        inp.disabled = !on;
+        if (!on) inp.value = '';
+      });
+      s.push(typeQ); s.push(scoreQ);
+      s.push(q('いまの実力が分かるものを教えてください', { help: '例：「過去問で65%」「前回の英検で不合格A」「まだ解いていない」' }, [text('last_score1')]));
+      s.push(q('いちばん自信がないところを教えてください', req, [checks('gap_type', ['単語・漢字などを覚えること', '長い文を読むこと（長文）', '聞き取り（リスニング）', '書くこと（英作文・記述）', '面接', 'まだ分からない'], true)]));
+      s.push(q('使う問題集の目次の写真を送れるか教えてください', {}, [radios('photo_book', ['送れる', '送らない'])]));
+    } else if (style === 'B') {
+      s.push(h('h2', { text: '受験逆算' }));
+      s.push(note('受験日までの月ごとの道筋は、担当講師が作ります。ここでは次の模試までの分だけ答えてください。\n（※志望校情報は入会時データのプレフィル連携により自動で取得・反映されます）'));
+      s.push(group('次に受ける模試の名前と日を教えてください', null, [
+        sub('名前', text('mock_name'), { required: true, help: '例：「全統記述模試」「駿台模試」「Vもぎ」' }),
+        sub('日', date('goal_date'), req)]));
+      s.push(slotList(L.maxGoals, function (k) {
+        var w = h('div', { class: k > 1 ? 'slot' : null });
+        if (k === 1) {
+          w.appendChild(group('いちばん上げたい科目と、目標の偏差値（または点数）を教えてください', null, [
+            sub('科目', subjectSelect('goal_subject1', L.subjects), req),
+            sub('目標', num('goal_score1'), { required: true, help: '偏差値なら前回より3〜5上、点数なら前回より10〜20点上くらいが目安です' })]));
+          w.appendChild(q('その科目の、前回の模試の偏差値（または点数）を教えてください', {}, [num('last_score1')]));
+        } else {
+          w.appendChild(group(k + 'つ目に上げたい科目の、科目と目標の偏差値（または点数）を教えてください', null, [
+            sub('科目', subjectSelect('goal_subject' + k, L.subjects), req),
+            sub('目標', num('goal_score' + k), req),
+            sub('前回', num('last_score' + k))]));
+        }
+        return w;
+      }, '＋ 上げたい科目を追加する'));
+      s.push(q('前回の模試で、点を落とした理由に近いものを教えてください', { required: true, help: '当てはまるものを、いくつでも選べます' }, [checks('gap_type', GAP_MOCK, true)]));
+      s.push(q('点を落とした単元や問題を、分かる範囲で教えてください', { help: '例：「英語の長文で後半の2題に手がつかなかった」「数学の確率で大問1つ0点」' }, [text('gap_text')]));
+      s.push(q('学校の課題に1週間でどのくらい時間を使っているか教えてください', req, [radios('school_hw_weekly_min', HW_WEEKLY)]));
+      s.push(q('前回の模試の成績表の写真を送れるか教えてください', {}, [radios('photo_mock', ['送れる', '手元にない', 'まだ受けたことがない'])]));
+    } else if (style === 'C') {
+      s.push(h('h2', { text: '習慣づくり：ゴール' }));
+      s.push(q('1週間に何日、勉強したいか教えてください', req, [radios('goal_days', ['3日', '4日', '5日', '6日', '毎日'])]));
+      s.push(q('1日に何分、勉強したいか教えてください', { required: true, help: '最初は少し物足りないくらいがちょうどいいです。続いたら増やします' }, [radios('goal_min_per_day', ['15分', '30分', '45分', '1時間', '1時間半'])]));
+      s.push(q('この1週間で、家で勉強した日が何日あったか教えてください', req, [radios('last_week_days', ['0日', '1〜2日', '3〜4日', '5日以上'])]));
+      s.push(q('学校や塾の宿題に、1週間でどのくらい時間を使っているか教えてください', req, [radios('school_hw_weekly_min', HW_WEEKLY)]));
+    }
+    return s;
+  }
+
+  function itemsStep(style, lv) {
+    var L = LEVELS[lv], s = [];
+    if (style === 'CP') {
+      s.push(h('h2', { text: '課題・タスク' }));
+      s.push(note('終わらせたい課題を、提出日が近いものから1つずつ入れてください。'));
+      s.push(slotList(TASK_MAX, function (k) {
+        var p = 'hw' + k + '_', first = k === 1, o = first ? req : {};
+        var w = h('div', { class: 'slot' }, [h('div', { class: 'slot-title', text: '課題' + k })]);
+        w.appendChild(group('課題の名前と科目を教えてください', null, [
+          sub('名前', text(p + 'name'), { required: first, help: first ? '例：「数学の問題集」「英語の夏休みワーク」「塾の理科プリント」' : null }),
+          sub('科目', subjectSelect(p + 'subject', L.subjects), o)]));
+        w.appendChild(group('残っている量を教えてください', null, [
+          sub('数え方', radios(p + 'unit', ['ページ', '枚', '問']), o),
+          sub('量', freeNum(p + 'amount', '例：10、15〜20'), { required: first, help: first ? '全体ではなく、まだやっていない分です。だいたいの数で大丈夫です（例：10、15〜20）' : null })]));
+        w.appendChild(q('提出日を教えてください', { help: first ? '毎週出る課題なら、次の提出日を入れて、次の質問で「毎週」を選ぶ。期限がない場合も1週間単位で管理するため、「毎週」を選ぶようにする' : null }, [date(p + 'due')]));
+        w.appendChild(q('この課題が毎週出るものか教えてください', o, [radios(p + 'repeat', ['1回だけ', '毎週同じくらい出る'])]));
+        w.appendChild(q('1ページ（1枚・1問）にかかる時間を教えてください', { required: first, help: first ? 'いま実際に1ページ解いて、時間を計ってから選んでください。思ったより長くかかることがほとんどです。ページによって違うので、だいたいの平均で大丈夫です' : null }, [select(p + 'unit_min', UNIT_MIN)]));
+        return w;
+      }, '＋ 課題・タスクを追加する'));
+    } else {
+      s.push(h('h2', { text: '教材' }));
+      s.push(note('計画に入れる教材を、大事なものから1つずつ入れてください。\n「数学を勉強する」ではなく、「どの教材の、どこからどこまでを、どうやるか」を決めます。\n【2週目以降の方へ】前回と同じ教材の続きをやる場合は、すでに入力されている内容をそのままにし、「範囲（どこからどこまで）」の数字だけを書きかえてください。'));
+      s.push(slotList(TASK_MAX, function (k) {
+        var p = 'task' + k + '_', first = k === 1, o = first ? req : {};
+        var w = h('div', { class: 'slot' }, [h('div', { class: 'slot-title', text: '教材' + k })]);
+        w.appendChild(q('教材の科目を教えてください', o, [subjectSelect(p + 'subject', L.subjects)]));
+        w.appendChild(q('教材の名前を教えてください', { required: first, help: first ? '例：「学校の数学ワーク」「青チャートIA」「ターゲット1900」' : null }, [text(p + 'material')]));
+        w.appendChild(group('テスト（模試・試験）までに終わらせたい範囲を教えてください', first ? 'もう終わっているところは入れず、これからやるところだけ入れてください。数字でも、「3-a」のような番号でも入れられます' : null, [
+          sub('数え方', radios(p + 'unit', ['ページ', '問題の番号', '単語の番号']), o),
+          sub('はじめ', freeNum(p + 'start', '例：12、3-a'), o),
+          sub('おわり', freeNum(p + 'end', '例：30、5-c'), o)]));
+        w.appendChild(q('その範囲をどうやって進めるか教えてください', o, [radios(p + 'method', ['解いて丸つけし、間違えた問題に印をつける', '印をつけた問題だけ解き直す（2周目）', '読んで、大事なところをノートにまとめる', '覚える（単語・用語・漢字）'], true)]));
+        w.appendChild(q('1ページ（1問・10単語）にかかる時間を教えてください', { required: first, help: first ? 'いま実際に1ページ解いて、時間を計ってから選んでください。思ったより長くかかることがほとんどです。ページによって違うので、だいたいの平均で大丈夫です' : null }, [select(p + 'unit_min', UNIT_MIN)]));
+        return w;
+      }, '＋ 教材を追加する'));
+    }
+    return s;
+  }
+
+  function daysStep(style, lv) {
+    var L = LEVELS[lv], s = [h('h2', { text: style === 'C' ? '習慣づくり：曜日ごとのメニュー' : '曜日ごとの勉強時間' })];
+    function rows(prefix, options, title, help) {
+      var w = h('div', { class: 'q' }, [titleEl(title, true)]);
+      if (help) w.appendChild(h('div', { class: 'help', text: help }));
+      WEEKDAYS.forEach(function (d) {
+        var r = h('div', { class: 'row', 'data-req': '1', 'data-title': title + '（' + d[1] + '）' }, [h('div', { class: 'day', text: d[1] }), select(prefix + d[0], options)]);
+        w.appendChild(r);
+      });
+      return w;
+    }
+    s.push(rows('avail_', AVAIL, '曜日ごとに、家で勉強に使える時間を教えてください', '部活・塾・習い事を除いて、実際に使える時間で選んでください。授業や塾の時間は入れません'));
+    if (style === 'C') {
+      s.push(rows('menu_', L.subjects.concat(['学校の宿題', 'やらない日']), '曜日ごとに、何をやるか教えてください', '毎週同じにします。迷ったら「月水金は英語、火木は数学」のように決めてみてください。「やらない日」は、前のページで選んだ日数に合わせてください'));
+      s.push(q('使う教材があれば教えてください', { help: '例：「英語は学校の単語帳、数学は学校のワーク」' }, [text('c_materials')]));
+    } else {
+      s.push(q('計画を入れない日（予備日）にする曜日を教えてください', { required: true, help: '遅れたときに追いつく日です。迷ったら、いちばん時間がとりにくい曜日にしてください' }, [radios('reserve_day', WEEKDAYS.map(function (d) { return d[1]; }))]));
+      s.push(q('大会・行事・旅行など、勉強できない日があれば教えてください', { help: '例：「11/3 部活の大会」「11/15〜16 修学旅行」' }, [text('busy_note')]));
+    }
+    return s;
+  }
+
+  function confirmStep(code) {
+    return [
+      h('h2', { text: '確認のしかた・LINE登録' }),
+      q('計画の進み具合を、講師にどのくらい見てほしいか教えてください', req, [radios('check_level', [
+        '講師からすぐ返事がほしい（例：計画した内容を完璧に達成できなかった日のみ運営から講師に通知し、記録提出から24時間以内に「どこで止まった？」と聞かれる）',
+        '週1回の授業で、1週間分をまとめて見てもらえば十分（例：授業の最初の5分で振り返る）'])]),
+      q('1週間の進み具合のまとめを、保護者の方のLINEにも送ってよいか教えてください', { required: true, help: '送るのは毎日の記録の合計だけです。あなたが書いたメモは送りません' }, [radios('parent_summary', ['送ってほしい（毎週日曜の夜に1回）', '送らなくてよい'])]),
+      q('あとでLINEに送る写真を教えてください', { help: '計画を直すときに、講師が見る写真です。LINEを登録したあと、LINEのメニュー「写真を送る」から送ってもらいます。送る予定のものを選んでください' }, [checks('photos_planned', ['テストの範囲表', '前回の答案', '模試の成績表', '問題集の目次', '課題の一覧', '送る写真はない'])]),
+      q('LINE登録番号', { help: NOEDIT + '。下のLINE登録で使います' }, [text('line_code', { readonly: !!code, value: code })]),
+      note('最後に、LINEを登録してください。計画表と、毎日の記録の質問がここに届きます。\n\n1. 下のリンクを、自分のスマホで開いてください\n   ' + LIFF_URL + '\n2. 画面の案内にしたがって、トウコベのLINEを友だち追加して、上の6桁の番号を入れてください（すでに友だち追加している人は、友だち追加はそのままで、番号だけ入れてください）\n3. このページに戻って「送信」を押してください\n\n写真（範囲表・成績表など）は、登録したあとにLINEのメニュー「写真を送る」から送れます。\n自分のスマホがない、LINEを使っていない場合は、そのまま送信してください。計画表は保護者の方のLINEに届きます。'),
+      q('LINEの登録ができたか教えてください', req, [radios('line_status', ['登録できた', '自分のLINEがない・使っていない', 'あとで登録する'])]),
+      q('講師に伝えておきたいことがあれば教えてください', { help: '例：「11月は部活の大会が続くので量を少なめにしたい」「前に計画を立てて続かなかった」' }, [area('note_to_tutor')])
+    ];
+  }
+
+  // ===== 進め方 =====
+  var params = new URLSearchParams(location.search);
+  var hiddenArea = $('#hiddenArea'), stepsEl = $('#steps');
+  var bar = $('#bar'), label = $('#stepLabel'), err = $('#err');
+  var back = $('#back'), next = $('#next'), submit = $('#submit');
+  var sections = [], idx = 0, builtKey = null;
+
+  // URLの値を、見えない項目に入れる（プレフィル）
+  ['student_id', 'student_name', 'grade', 'target_school'].forEach(function (k) {
+    if (params.get(k)) hiddenArea.appendChild(h('input', { type: 'hidden', name: k, value: params.get(k) }));
+  });
+  var hasGrade = !!params.get('grade');
+
+  // 1ページ目
+  var first = h('section', { class: 'step', 'data-step': '1' });
+  first.appendChild(q('誰が答えているか教えてください', req, [radios('respondent', ['自分ひとりで答えている', '保護者の方と一緒に答えている', '保護者の方が代わりに答えている'])]));
+  if (!hasGrade) first.appendChild(q('学年', { required: true, help: '学年に合わせて選んでください' }, [select('grade', GRADES)]));
+  first.appendChild(q('どんな計画を作りたいか、いちばん近いものを教えてください', { required: true, help: 'テストも習慣も、のように迷ったら、いま一番困っているほうを選んでください。あとで変えられます' }, [
+    (function () {
+      var box = h('div');
+      STYLES.forEach(function (st) { box.appendChild(h('label', { class: 'opt' }, [h('input', { type: 'radio', name: 'style', value: st.name, 'data-id': st.id }), st.label])); });
+      return box;
+    })()]));
+  stepsEl.appendChild(first);
+  sections = [first];
+
+  function levelNow() {
+    var g = params.get('grade') || ($('select[name=grade]') ? $('select[name=grade]').value : '');
+    return /^中/.test(g) ? 'J' : 'S';
+  }
+  function styleNow() {
+    var r = document.querySelector('input[name=style]:checked');
+    return r ? r.getAttribute('data-id') : '';
+  }
+
+  // 計画の種類（と学年）が決まったら、2ページ目以降を作る
+  function build(style, lv) {
+    var key = style + '/' + lv;
+    if (builtKey === key) return;
+    sections.slice(1).forEach(function (s) { stepsEl.removeChild(s); });
+    sections = [first];
+    var defs = [];
+    if (style !== 'CP') defs.push(goalStep(style, lv));
+    if (style !== 'C') defs.push(itemsStep(style, lv));
+    defs.push(daysStep(style, lv));
+    defs.push(confirmStep(params.get('line_code') || ''));
+    defs.forEach(function (nodes, i) {
+      var sec = h('section', { class: 'step hidden', 'data-step': String(i + 2) }, nodes);
+      stepsEl.appendChild(sec);
+      sections.push(sec);
+    });
+    builtKey = key;
+  }
+
+  function render() {
+    sections.forEach(function (s, i) { s.classList.toggle('hidden', i !== idx); });
+    var total = sections.length > 1 ? sections.length : 5; // 計画の種類を選ぶまでは、5ステップと仮定（バーが戻らないように）
+    bar.style.width = ((idx + 1) / total * 100) + '%';
+    label.textContent = sections.length > 1 ? ('ステップ ' + (idx + 1) + ' / ' + sections.length) : 'ステップ 1';
+    var last = sections.length > 1 && idx === sections.length - 1;
+    back.classList.toggle('hidden', idx === 0);
+    next.classList.toggle('hidden', last);
+    submit.classList.toggle('hidden', !last);
+    err.textContent = '';
+    window.scrollTo(0, 0);
+  }
+
+  // 必須のチェック（いま見えているステップだけ）
+  function firstMissing(root) {
+    var bad = null;
+    root.querySelectorAll('[data-req]').forEach(function (w) {
+      if (w.closest('.hidden')) return;
+      var ok;
+      if (w.querySelector('input[type=radio]')) ok = !!w.querySelector('input[type=radio]:checked');
+      else if (w.querySelector('input[type=checkbox]')) ok = !!w.querySelector('input[type=checkbox]:checked');
+      else { var el = w.querySelector('input,select,textarea'); ok = !!(el && String(el.value).trim()); }
+      w.classList.toggle('has-error', !ok);
+      if (!ok && !bad) bad = w;
+    });
+    return bad;
+  }
+  // 点数・偏差値の欄は、数字（小数も可）だけ。全角は半角に直す
+  function firstBadFormat(root) {
+    var bad = null;
+    root.querySelectorAll('input[data-num]').forEach(function (el) {
+      if (el.disabled || el.closest('.hidden')) return;
+      var v = el.value.replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }).replace(/[．。]/g, '.').trim();
+      el.value = v;
+      var ok = v === '' || /^\d+(\.\d+)?$/.test(v);
+      var box = el.closest('[data-title]') || el.parentElement;
+      box.classList.toggle('has-error', !ok);
+      if (!ok && !bad) bad = box;
+    });
+    return bad;
+  }
+  function guard() {
+    var sec = sections[idx];
+    var missing = firstMissing(sec), badFmt = firstBadFormat(sec);
+    if (badFmt) {
+      err.textContent = '入力の形式が違います（数字で入力してください）：' + (badFmt.getAttribute('data-title') || '');
+      badFmt.scrollIntoView({ block: 'center' });
+      return false;
+    }
+    if (missing) {
+      err.textContent = '必須の項目が入力されていません：' + (missing.getAttribute('data-title') || '');
+      missing.scrollIntoView({ block: 'center' });
+      return false;
+    }
+    return true;
+  }
+
+  next.addEventListener('click', function () {
+    if (!guard()) return;
+    if (idx === 0) build(styleNow(), levelNow());
+    idx++; render();
+  });
+  back.addEventListener('click', function () { if (idx > 0) { idx--; render(); } });
+  $('#f').addEventListener('submit', function (e) { if (!guard()) e.preventDefault(); });
+  render();
+})();
+</script>
+</body>
+</html>
