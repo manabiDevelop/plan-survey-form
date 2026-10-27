@@ -317,33 +317,33 @@
       s.push(h('h2', { text: '課題・タスク' }));
       s.push(note('終わらせたい課題を、提出日が近いものから1つずつ入れてください。'));
       s.push(slotList(TASK_MAX, function (k) {
-        var p = 'hw' + k + '_', first = k === 1, o = first ? req : {};
+        var p = 'hw' + k + '_', first = k === 1, o = req;
         var w = h('div', { class: 'slot' }, [h('div', { class: 'slot-title', text: '課題' + k })]);
         w.appendChild(group('課題の名前と科目を教えてください', null, [
-          sub('名前', text(p + 'name'), { required: first, help: first ? '例：「数学の問題集」「英語の夏休みワーク」「塾の理科プリント」' : null }),
+          sub('名前', text(p + 'name'), { required: true, help: first ? '例：「数学の問題集」「英語の夏休みワーク」「塾の理科プリント」' : null }),
           sub('科目', subjectSelect(p + 'subject', L.subjects), o)]));
         w.appendChild(group('残っている量を教えてください', null, [
           sub('数え方', radios(p + 'unit', ['ページ', '枚', '問']), o),
-          sub('量', freeNum(p + 'amount', '例：10、15〜20'), { required: first, help: first ? '全体ではなく、まだやっていない分です。だいたいの数で大丈夫です（例：10、15〜20）' : null })]));
+          sub('量', freeNum(p + 'amount', '例：10、15〜20'), { required: true, help: first ? '全体ではなく、まだやっていない分です。だいたいの数で大丈夫です（例：10、15〜20）' : null })]));
         w.appendChild(q('提出日を教えてください', { help: first ? '毎週出る課題なら、次の提出日を入れて、次の質問で「毎週」を選ぶ。期限がない場合も1週間単位で管理するため、「毎週」を選ぶようにする' : null }, [date(p + 'due')]));
         w.appendChild(q('この課題が毎週出るものか教えてください', o, [radios(p + 'repeat', ['1回だけ', '毎週同じくらい出る'])]));
-        w.appendChild(q('1ページ（1枚・1問）にかかる時間を教えてください', { required: first, help: first ? 'いま実際に1ページ解いて、時間を計ってから選んでください。思ったより長くかかることがほとんどです。ページによって違うので、だいたいの平均で大丈夫です' : null }, [select(p + 'unit_min', UNIT_MIN)]));
+        w.appendChild(q('1ページ（1枚・1問）にかかる時間を教えてください', { required: true, help: first ? 'いま実際に1ページ解いて、時間を計ってから選んでください。思ったより長くかかることがほとんどです。ページによって違うので、だいたいの平均で大丈夫です' : null }, [select(p + 'unit_min', UNIT_MIN)]));
         return w;
       }, '＋ 課題・タスクを追加する'));
     } else {
       s.push(h('h2', { text: '教材' }));
       s.push(note('計画に入れる教材を、大事なものから1つずつ入れてください。\n「数学を勉強する」ではなく、「どの教材の、どこからどこまでを、どうやるか」を決めます。\n【2週目以降の方へ】前回と同じ教材の続きをやる場合は、すでに入力されている内容をそのままにし、「範囲（どこからどこまで）」の数字だけを書きかえてください。'));
       s.push(slotList(TASK_MAX, function (k) {
-        var p = 'task' + k + '_', first = k === 1, o = first ? req : {};
+        var p = 'task' + k + '_', first = k === 1, o = req;
         var w = h('div', { class: 'slot' }, [h('div', { class: 'slot-title', text: '教材' + k })]);
         w.appendChild(q('教材の科目を教えてください', o, [subjectSelect(p + 'subject', L.subjects)]));
-        w.appendChild(q('教材の名前を教えてください', { required: first, help: first ? '例：「学校の数学ワーク」「青チャートIA」「ターゲット1900」' : null }, [text(p + 'material')]));
+        w.appendChild(q('教材の名前を教えてください', { required: true, help: first ? '例：「学校の数学ワーク」「青チャートIA」「ターゲット1900」' : null }, [text(p + 'material')]));
         w.appendChild(group('テスト（模試・試験）までに終わらせたい範囲を教えてください', first ? 'もう終わっているところは入れず、これからやるところだけ入れてください。数字でも、「3-a」のような番号でも入れられます' : null, [
           sub('数え方', radios(p + 'unit', ['ページ', '問題の番号', '単語の番号']), o),
           sub('はじめ', freeNum(p + 'start', '例：12、3-a'), o),
           sub('おわり', freeNum(p + 'end', '例：30、5-c'), o)]));
         w.appendChild(q('その範囲をどうやって進めるか教えてください', o, [radios(p + 'method', ['解いて丸つけし、間違えた問題に印をつける', '印をつけた問題だけ解き直す（2周目）', '読んで、大事なところをノートにまとめる', '覚える（単語・用語・漢字）'], true)]));
-        w.appendChild(q('1ページ（1問・10単語）にかかる時間を教えてください', { required: first, help: first ? 'いま実際に1ページ解いて、時間を計ってから選んでください。思ったより長くかかることがほとんどです。ページによって違うので、だいたいの平均で大丈夫です' : null }, [select(p + 'unit_min', UNIT_MIN)]));
+        w.appendChild(q('1ページ（1問・10単語）にかかる時間を教えてください', { required: true, help: first ? 'いま実際に1ページ解いて、時間を計ってから選んでください。思ったより長くかかることがほとんどです。ページによって違うので、だいたいの平均で大丈夫です' : null }, [select(p + 'unit_min', UNIT_MIN)]));
         return w;
       }, '＋ 教材を追加する'));
     }
